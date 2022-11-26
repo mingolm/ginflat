@@ -121,18 +121,18 @@ func (r *router) handle(method, path string, handler interface{}) {
 		defer reqPool.Put(reqP)
 
 		if err := internal.BindingRequest(ctx, &reqVal); err != nil {
-			r.render.Error(ctx, err)
+			r.render.ErrRender(ctx, err)
 			return
 		}
 		callResp := v.Call([]reflect.Value{reflect.ValueOf(ctx), reqVal})
 		if callResp[1].IsNil() {
-			r.render.Data(ctx, callResp[0].Interface())
+			r.render.DataRender(ctx, callResp[0].Interface())
 			return
 		}
 		if !callResp[0].IsNil() {
-			r.render.Data(ctx, callResp[0].Interface())
+			r.render.DataRender(ctx, callResp[0].Interface())
 		}
-		r.render.Error(ctx, callResp[1].Interface().(error))
+		r.render.ErrRender(ctx, callResp[1].Interface().(error))
 	})
 }
 

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mingolm/ginflat"
 	"github.com/mingolm/ginflat/example/middleware"
@@ -19,7 +18,8 @@ func (c *User) InitRouter(r ginflat.Router) {
 
 type (
 	GetUserDetailRequest struct {
-		Id uint64 `form:"id" binding:"required"`
+		Id   uint64 `form:"id" binding:"required"`
+		Name string `form:"name" binding:"required"`
 	}
 	GetUserDetailResponse struct {
 		Id   uint64 `json:"id"`
@@ -28,12 +28,11 @@ type (
 )
 
 func (c *User) getDetail(ctx *gin.Context, req *GetUserDetailRequest) (resp *GetUserDetailResponse, err error) {
-	if req.Id != 1 {
-		fmt.Println("user return")
+	if req.Id > 10 {
 		return nil, errors.New("user not found")
 	}
 	return &GetUserDetailResponse{
-		Id:   1,
-		Name: "user",
+		Id:   req.Id,
+		Name: req.Name,
 	}, nil
 }

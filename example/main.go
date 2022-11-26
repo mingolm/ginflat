@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/mingolm/ginflat/example/middleware"
+	"github.com/mingolm/ginflat/example/render"
 	"net/http"
 	"time"
 
@@ -11,8 +12,10 @@ import (
 )
 
 func main() {
-	handler := ginflat.NewHandler()
-	handler.Use(middleware.ErrHandler())
+	handler := ginflat.NewHandler(
+		ginflat.WithRender(render.Render()),
+		ginflat.WithMiddlewares(middleware.ErrHandler()),
+	)
 	handler.RegisterController("localhost.test", &controller.User{})
 	handler.RegisterController("admin.localhost.test", &controller.Admin{})
 
@@ -31,10 +34,7 @@ func newHttpServer(handler *ginflat.Handler) *http.Server {
 	cancel()
 
 	return &http.Server{
-		Addr:         ":23380",
-		Handler:      handler,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  150 * time.Second,
+		Addr:    ":23380",
+		Handler: handler,
 	}
 }

@@ -12,14 +12,21 @@ import (
 
 var _ http.Handler = &Handler{}
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(opts ...HandleOption) *Handler {
+	o := &handleOptions{
+		render: defaultRender,
+	}
+	for _, opt := range opts {
+		opt(o)
+	}
+	return &Handler{
+		opts: o,
+	}
 }
 
 type Handler struct {
+	opts         *handleOptions
 	hostHandlers sync.Map
-	hostRenders  sync.Map
-	middlewares  MiddlewareChain
 }
 
 type ginHandler struct {
@@ -43,18 +50,10 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *Handler) Use(handles ...Middleware) {
-	h.middlewares = append(h.middlewares, handles...)
-}
-
-func (h *Handler) RegisterRender(host string, render Render) {
-	h.hostRenders.Store(host, render)
-}
-
 func (h *Handler) RegisterController(host string, controllers ...Controller) {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	engine.Use(h.middlewares...)
+	engine.Use(h.opts.middlewares...)
 
 	h.hostHandlers.Store(host, &ginHandler{
 		engine:      engine,
@@ -66,20 +65,13 @@ func (h *Handler) InitControllers(ctx context.Context) (err error) {
 	h.hostHandlers.Range(func(key, value interface{}) bool {
 		gh := value.(*ginHandler)
 		host := key.(string)
-
-		// render
-		rd := defaultRender
-		if rdi, ok := h.hostRenders.Load(host); ok {
-			rd = rdi.(Render)
-		}
-
 		for _, ctrl := range gh.controllers {
 			if err = ctrl.Init(ctx); err != nil {
 				err = fmt.Errorf("%s controller init failed: %w", host, err)
 				return false
 			}
 
-			ctrl.InitRouter(NewRouter(&gh.engine.RouterGroup, rd))
+			ctrl.InitRouter(NewRouter(&gh.engine.RouterGroup, h.opts.render))
 		}
 		return true
 	})
