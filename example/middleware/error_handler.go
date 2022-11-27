@@ -4,9 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mingolm/ginflat"
-	"net/http"
+	"github.com/mingolm/ginflat/httperrors"
 	"time"
 )
+
+type ErrResponse struct {
+	Msg       string
+	ErrorType string
+}
 
 func ErrHandler() ginflat.Middleware {
 	return func(ctx *gin.Context) {
@@ -19,8 +24,10 @@ func ErrHandler() ginflat.Middleware {
 				} else {
 					err = fmt.Errorf("panic: %+v", x)
 				}
-				_ = ctx.Error(err)
-				ctx.Abort()
+			}
+
+			if err != nil {
+				handle(ctx, err)
 			}
 		}()
 
@@ -32,13 +39,14 @@ func ErrHandler() ginflat.Middleware {
 		}
 
 		err = errs[0].Err
-		if err != nil {
-			ctx.Render(http.StatusBadRequest, ginflat.Json(gin.H{
-				"success": false,
-				"data":    err.Error(),
-				"now":     time.Now().Unix(),
-			}))
-			return
-		}
 	}
+}
+
+func handle(ctx *gin.Context, err error) {
+	xe := httperrors.ToResponse(err)
+	ctx.Render(xe.StatusCode, ginflat.Json(gin.H{
+		"success": false,
+		"data":    xe.Data,
+		"now":     time.Now().Unix(),
+	}))
 }
