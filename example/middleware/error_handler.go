@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mingolm/ginflat"
 	"github.com/mingolm/ginflat/httperrors"
-	"time"
 )
 
 type ErrResponse struct {
@@ -46,7 +46,6 @@ func handle(ctx *gin.Context, err error) {
 	xe := httperrors.ToResponse(err)
 	ctx.Render(xe.StatusCode, ginflat.Json(gin.H{
 		"success": false,
-		"data":    xe.Data,
-		"now":     time.Now().Unix(),
+		"err_msg": xe.Data,
 	}))
 }

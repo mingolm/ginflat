@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mingolm/ginflat"
 	"github.com/mingolm/ginflat/example/middleware"
@@ -13,47 +15,72 @@ type User struct {
 
 func (c *User) InitRouter(r ginflat.Router) {
 	g := r.Group("/user").Use(middleware.UserMiddleware())
-	g.Get("/detail", c.getDetail)
+	g.Get("/get", c.get)
+	g.Post("/add", c.add)
 	g.Post("/delete", c.delete)
 }
 
 type (
-	GetUserDetailRequest struct {
-		Id   uint64 `form:"id" binding:"required"`
-		Name string `form:"name" binding:"required"`
+	GetRequest struct {
+		Id uint64 `form:"id" binding:"required"`
 	}
-	GetUserDetailResponse struct {
+	GetResponse struct {
 		Id   uint64 `json:"id"`
 		Name string `json:"name"`
 	}
 )
 
-func (c *User) getDetail(ctx *gin.Context, req *GetUserDetailRequest) (resp *GetUserDetailResponse, err error) {
-	if req.Id > 10 {
-		// return nil, httperrors.ErrInvalidArgument.Msg("user id")
-		return nil, httperrors.ErrNotFound.Msg("user not found").ErrorType("USER_NOT_EXIST")
-		// return nil, httperrors.NewWithCode(http.StatusBadGateway, "test error").ErrorType("AA")
-		// return nil, httperrors.ErrNotFound.Localize("user.not_exist")
-		// return nil, httperrors.ErrNotFound.ErrorType("USER_NOT_EXIST").Msg("user not exist")
-		// return nil, httperrors.NewWithCode(http.StatusNotFound, "user not exist")
+func (c *User) get(ctx *gin.Context, req *GetRequest) (resp *GetResponse, err error) {
+	key := fmt.Sprintf("user:%d", req.Id)
+	userVal, ok := c.dbs.Load(key)
+	if !ok {
+		return nil, httperrors.ErrNotFound.Msg("user %d not found", req.Id)
 	}
-	return &GetUserDetailResponse{
+
+	userRow := userVal.(*UserModel)
+	return &GetResponse{
+		Id:   userRow.Id,
+		Name: userRow.Name,
+	}, nil
+}
+
+type (
+	AddRequest struct {
+		Id   uint64 `form:"id" binding:"required"`
+		Name string `form:"name" binding:"required"`
+	}
+	AddResponse struct{}
+)
+
+func (c *User) add(ctx *gin.Context, req *AddRequest) (resp *AddResponse, err error) {
+	key := fmt.Sprintf("user:%d", req.Id)
+
+	if _, ok := c.dbs.Load(key); ok {
+		return nil, httperrors.ErrAlreadyExist.Msg("user %d already exist", req.Id)
+	}
+
+	c.dbs.Store(fmt.Sprintf("user:%d", req.Id), &UserModel{
 		Id:   req.Id,
 		Name: req.Name,
-	}, nil
+	})
+
+	return &AddResponse{}, nil
 }
 
 type (
 	DeleteRequest struct {
 		Id uint64 `form:"id" binding:"required"`
 	}
-	DeleteResponse struct {
-		IsDeleted bool `json:"is_deleted"`
-	}
+	DeleteResponse struct{}
 )
 
 func (c *User) delete(ctx *gin.Context, req *DeleteRequest) (resp *DeleteResponse, err error) {
-	return &DeleteResponse{
-		IsDeleted: req.Id == 10,
-	}, nil
+	key := fmt.Sprintf("user:%d", req.Id)
+
+	if _, ok := c.dbs.Load(key); !ok {
+		return nil, httperrors.ErrNotFound.Msg("user %d not found", req.Id)
+	}
+	c.dbs.Delete(key)
+
+	return &DeleteResponse{}, nil
 }

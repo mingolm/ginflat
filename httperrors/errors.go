@@ -2,13 +2,15 @@ package httperrors
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 var (
 	ErrNotFound        = newWithCode(http.StatusNotFound)
 	ErrInvalidArgument = newWithCode(http.StatusBadRequest)
+	ErrAlreadyExist    = newWithCode(http.StatusBadRequest)
 )
 
 type ChainError struct {
@@ -43,13 +45,13 @@ func (e ChainError) Format(s fmt.State, verb rune) {
 	}
 }
 
-func (e ChainError) Msg(msg string) *ChainError {
+func (e ChainError) Msg(format string, args ...any) *ChainError {
 	if !e.stack {
 		e.stack = true
 		e.cause = errors.WithStack(e.cause)
 	}
 
-	e.cause = errors.WithMessage(e.cause, msg)
+	e.cause = errors.WithMessage(e.cause, fmt.Sprintf(format, args...))
 	return &e
 }
 
