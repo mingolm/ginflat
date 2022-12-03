@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/mingolm/ginflat/example/middleware"
-	"github.com/mingolm/ginflat/example/render"
 	"net/http"
 	"time"
+
+	"github.com/mingolm/ginflat/example/middleware"
+	"github.com/mingolm/ginflat/example/render"
 
 	"github.com/mingolm/ginflat"
 	"github.com/mingolm/ginflat/example/controller"

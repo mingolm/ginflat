@@ -8,9 +8,14 @@ import (
 )
 
 var (
-	ErrNotFound        = newWithCode(http.StatusNotFound)
-	ErrInvalidArgument = newWithCode(http.StatusBadRequest)
-	ErrAlreadyExist    = newWithCode(http.StatusBadRequest)
+	ErrNotFound           = newWithCode(http.StatusNotFound)
+	ErrInvalidArguments   = newWithCode(http.StatusBadRequest)
+	ErrAlreadyExists      = newWithCode(http.StatusBadRequest)
+	ErrFailedPrecondition = newWithCode(http.StatusBadRequest)
+	ErrUnimplemented      = newWithCode(http.StatusNotImplemented)
+	ErrInternal           = newWithCode(http.StatusInternalServerError)
+	ErrUnauthorized       = newWithCode(http.StatusUnauthorized)
+	ErrForbidden          = newWithCode(http.StatusForbidden)
 )
 
 type ChainError struct {

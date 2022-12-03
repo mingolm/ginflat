@@ -8,11 +8,6 @@ import (
 	"github.com/mingolm/ginflat/httperrors"
 )
 
-type ErrResponse struct {
-	Msg       string
-	ErrorType string
-}
-
 func ErrHandler() ginflat.Middleware {
 	return func(ctx *gin.Context) {
 		var err error
